@@ -100,7 +100,8 @@ var table =
 function setCORSHeaders(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST");
-  res.setHeader("Access-Control-Allow-Headers", "accept, content-type");  
+  res.setHeader("Access-Control-Allow-Headers", "*");  
+  // res.setHeader("Access-Control-Allow-Headers", "accept, content-type");  
 }
 
 
@@ -253,8 +254,54 @@ app.all('/tag[\-]values', function(req, res) {
   res.end();
 });
 
-
 app.all('/aiaa', function(req, res) {
+  setCORSHeaders(res);
+  console.log(req.url);
+  console.log(req.body);
+
+  res.json(aiaaText);
+  res.end();
+});
+
+function genDeviceTree (layer, maxLayer, idx, count, parent) {
+  var result = []
+  if (!count) { count = 3; }
+  if (!maxLayer) { maxLayer = layer + 3; }
+  let type = 'folder';
+  if (layer > maxLayer) {
+    return [];
+  } else if (layer === maxLayer) {
+    type = 'device';
+  }
+  const prefix = parent ? parent.id : 'd';
+  for (var i = idx; i < idx + count; i++) {
+    const node = {
+      name: prefix + '_'+layer+'_'+i,
+      id: prefix + '_'+layer+'_'+i,
+      type: type,
+      children: []
+    }
+    node.children = genDeviceTree (layer + 1, maxLayer, 0, count, node)
+    result.push(node)
+  }
+  return result;
+}
+
+app.all('/assetsTopology', function(req, res) {
+  setCORSHeaders(res);
+  console.log(req.url);
+  console.log(req.body);
+  var body = req.body;
+  var result = {
+    assetsTree: genDeviceTree(body.layer, body.maxLayer, body.idx, body.count),
+    errorMessage: ''
+  }
+  res.json(result);
+  res.end();
+});
+
+
+app.all('/setLocationInfo', function(req, res) {
   setCORSHeaders(res);
   console.log(req.url);
   console.log(req.body);
